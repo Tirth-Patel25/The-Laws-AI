@@ -22,10 +22,15 @@ def extractor(file, type: str, category: str):
 # <----- ORDER EXTRACTOR ----->
 def cleanup_order_text(text: str):
     outcomes = re.split("=.+=", text)
+    # Main Content
     main_content = outcomes[-1]
     metadatas = "\n".join(outcomes[:-1])
+    pos=metadatas.find("undefined")
+    metadatas= metadatas[pos +len("undefined")+1:]
+    # main_pos=main_content.rfind("*")
+    # main_content=main_content[:main_pos]
     response = "# SEPERATOR #".join([metadatas, main_content])
-    return response
+    return main_content
 
 def order_extractor(file):
     file_bytes = file.file.read()
@@ -33,9 +38,29 @@ def order_extractor(file):
         text = ""
         for page in pdf.pages:
             text += page.extract_text() or ""
-
     cleaned_text = cleanup_order_text(text)
-    return cleaned_text
+    print(cleaned_text)
+    max_chunk_size=2000
+    sentences = re.split(r'(?<=[.!?]) +', cleaned_text) 
+# [.!?] means it  check for sentence ending punctuation 
+# ?<=  ensure that split occur after punctuation
+# " +" ensure that if this punctuation inside a sentence it doesn't split there
+# it check that there is space after punctuation if there is a space it make split
+    chunks = []
+    temp_text = ""
+
+    for sentence in sentences:
+        if len(temp_text) + len(sentence) > max_chunk_size:
+            if temp_text:  
+                chunks.append(temp_text.strip())
+            temp_text = sentence 
+        else:
+            temp_text += " " + sentence if temp_text else sentence
+
+    if temp_text:
+        chunks.append(temp_text.strip())
+
+    return chunks
 
 # <----- JUDGEMENT EXTRACTOR ----->
 def judgement_extractor(file):
@@ -46,7 +71,7 @@ def judgement_extractor(file):
     output = []
 
     temp_text = ""
-    header
+
     data = content.get("JudgementText", {}).get("Paragraphs", [])
 
     for para in data:
@@ -57,12 +82,10 @@ def judgement_extractor(file):
             if sub.get("IsSub"):
                 text = "\t" + text
 
-            # if adding this sub/sub-sub paragraph exceeds max_chunk_size, flush current
             if len(temp_text) + len(text) > max_chunk_size:
                 if temp_text:
                     output.append(temp_text.strip())
-                    output.append("# SEPERATOR #")
-                temp_text = text  # start new chunk with current subparagraph
+                temp_text = text
             else:
                 temp_text += text
 
@@ -70,54 +93,7 @@ def judgement_extractor(file):
     if temp_text:
         output.append(temp_text.strip())
 
-    return "\n".join(output)
-
-# def judgement_extractor(file):
-#     file_bytes = file.file.read()
-#     content = json.loads(file_bytes)
-
-#     chunk_size = 2000
-#     max_chunk_size = 2500
-#     output = []
-
-#     temp_text = ""
-#     data = content.get("JudgementText", {}).get("Paragraphs", [])
-
-#     for para in data:
-#         for sub in para.get("SubParagraphs", []):
-#             text = sub.get("Text", "")
-#             temp_text += text
-
-#             # keep cutting chunks while temp_text is too long
-#             while len(temp_text) >= chunk_size:
-#                 # cut at max_chunk_size if possible
-#                 cut_point = min(len(temp_text), max_chunk_size)
-#                 chunk = temp_text[:cut_point]
-#                 output.append(chunk.strip())
-#                 output.append("# SEPERATOR #")
-#                 temp_text = temp_text[cut_point:]
-
-#     # flush leftover text
-#     if temp_text:
-#         output.append(temp_text.strip())
-
-#     return "\n".join(output)
-
-    
-    # for para in data:
-    #     subparagraphs = para.get("SubParagraphs", [])
-    #     for i, sub in enumerate(subparagraphs):
-    #         if not sub.get("IsSub"):
-    #             output.append(f"{sub['Text']}")
-    #         else:
-    #             # Begin subpoints list if the previous item was not a subpoint
-    #             if i > 0 and not subparagraphs[i - 1].get("IsSub"):
-    #                 pass
-    #             output.append(f"\t{sub['Text']}")
-                
-        # output.append("") # Add newline between main paragraphs
-
-    # return "\n".join(output)
+    return output
 
 # <----- ACT EXTRACTOR ----->
 def cleanup_act_text(text: str):
@@ -135,7 +111,29 @@ def cleanup_act_text(text: str):
     return text
 
 def act_extractor(file):
-    data = json.loads(file)
+    file_bytes=file.file
+    data = json.load(file_bytes)
+    # Main Content.
     text = data.get("text", "No content")
     splitted_text = cleanup_act_text(text)
-    return splitted_text
+    max_chunk_size=2000
+    sentences = re.split(r'(?<=[.!?]) +', splitted_text) 
+# [.!?] means it  check for sentence ending punctuation 
+# ?<=  ensure that split occur after punctuation
+# " +" ensure that if this punctuation inside a sentence it doesn't split there
+# it check that there is space after punctuation if there is a space it make split
+    chunks = []
+    temp_text = ""
+
+    for sentence in sentences:
+        if len(temp_text) + len(sentence) > max_chunk_size:
+            if temp_text:  
+                chunks.append(temp_text.strip())
+            temp_text = sentence 
+        else:
+            temp_text += " " + sentence if temp_text else sentence
+
+    if temp_text:
+        chunks.append(temp_text.strip())
+
+    return chunks

@@ -43,8 +43,8 @@ def create_collection(collection: str) -> dict:
         return {"status": 400, "message": str(e)}
 
 def insert(collection: str, file_name: str,  file_type: str, file) -> dict | None:
-    file_content = extractor(file=file, type=file_type, category=collection)
-    chunks = chunker(file_content, category=collection)
+    chunks = extractor(file=file, type=file_type, category=collection)
+    # chunks = chunker(file_content, category=collection)
     print("length of chunks:", len(chunks))
     current_time = time.time()
     embeddings = generate_embeddings(chunks)
@@ -72,7 +72,7 @@ def insert(collection: str, file_name: str,  file_type: str, file) -> dict | Non
     return response if response else None
     # return "Something"
 
-def search(query: str) -> str:
+def search(query: str,collection:str) -> str:
     search_query = search_embeddings(query=query)
 
     search_params = {
@@ -80,46 +80,46 @@ def search(query: str) -> str:
         "index_type":"HNSW",
         "metric_type":"COSINE",
         "efConstruction":256,
-        "M":64
+        "M":64,
+        "radius": 0.6
     }
     
-    documents = milvus_client.search(collection_name="judgement", data=[search_query], search_params=search_params, limit=5, output_fields=["text", "id"])[0]
+    # # Get Documents
+    # documents = milvus_client.search(
+    #     collection_name=collection, 
+    #     data=[search_query], 
+    #     search_params=search_params,
+    #     filter="not id like '%_@_1'",
+    #     limit=5, 
+    #     output_fields=["text", "id"]
+    # )[0]
+
+    # # Get header chunks
+    # header_chunks = milvus_client.search(
+    #     collection_name=collection, 
+    #     data=[search_query], 
+    #     search_params=search_params,
+    #     filter="id LIKE '%_@_1'",
+    #     limit=5, 
+    #     output_fields=["text", "id"]
+    # )[0]
+
+    # Actual search
+    chunks = milvus_client.search(
+        collection_name=collection, 
+        data=[search_query], 
+        search_params=search_params,
+        limit=5, 
+        output_fields=["text", "id"]
+    )[0]
+
     # print("Docs: ", documents)
-    if documents:
-        ids = list(set([docs["id"] for docs in documents]))
-        chunk_ids = [id.split("_@_")[0] + "_@_1" for id in ids]
-        content_chunks = [docs for docs in documents]
-        header_chunks = milvus_client.get(collection_name="judgement", ids=chunk_ids, output_fields=["text", "id"])
-
-        content_map = defaultdict(list)
-        for item in content_chunks:
-            prefix = item["id"].split("_@_")[0]
-            content_map[prefix].append(item["entity"]["text"])
-
-        # Step 2: Build final merged list
-        merged_chunks = []
-        for header in header_chunks:
-            prefix = header["id"].split("_@_")[0]
-            contents = content_map.get(prefix, [])
-
-            # Avoid duplication: drop header if already in contents
-            if header["text"] in contents:
-                combined = contents
-            else:
-                combined = [header["text"]] + contents
-
-            merged_chunks.append("".join(combined))
-        
-        context = "\nNew Context\n".join(merged_chunks)
-        print("Length of Character:", len(context))
-        print("Context: \n", context)
-
-        if header_chunks:
-            context_to_send = header_chunks + " ".join(context)
-        else:
-            context_to_send = " ".join(context)
-        
-        return context_to_send
+    # if documents and header_chunks:
+    if chunks:
+        context = ""
+        for chunk in chunks:
+            print("Context:\n", chunk['id'], chunk['distance'])
+            context += f"{chunk['entity']['text']}\n"
+        return context
     else:
-        context_to_send = "No context found"
-    return "Some Context"
+        return "No Context Found Do not response"

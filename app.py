@@ -73,7 +73,8 @@ async def chat(request: dict =  Body(...)):
     initial_tokens = res.usage_metadata["total_tokens"]
     
     if res.tool_calls and res.tool_calls[0]:
-        context = search(query=query, collection=res.tool_calls[0].name)
+        tool_call = res.tool_calls[0]
+        context = search(query=query, collection=tool_call["name"])
         response = llm(query=query, context=context, chat_history=chat_history)
         response = list(response)
         response[1] = response[1] + initial_tokens

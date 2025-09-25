@@ -1,7 +1,7 @@
-from langchain_experimental.text_splitter import SemanticChunker
+# from langchain_experimental.text_splitter import SemanticChunker
 from services.embedder import embedder
 
-semanticChunker = SemanticChunker(embeddings=embedder, breakpoint_threshold_amount=0.75, min_chunk_size=2000)
+# semanticChunker = SemanticChunker(embeddings=embedder, breakpoint_threshold_amount=0.75, min_chunk_size=2000)
 
 # <----- Type wise Chunks ----->
 def get_judgement_chunks(text: str) -> list[str]:

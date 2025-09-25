@@ -1,12 +1,13 @@
-from langchain_ollama import ChatOllama
-from langchain_groq import ChatGroq
-from dotenv import load_dotenv
+# from langchain_ollama import ChatOllama
+# from langchain_groq import ChatGroq
+
 from services.prompts import Prompt
 from typing import Tuple
-import os
-from utils.llm import get_llm
+from utils.llms import get_llm
 
-load_dotenv()
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()
 
 # Production Local LLM use
 # ollama_llm = ChatOllama(model=os.getenv("OLLAMA_MODEL", "llama3.1:8b"))
@@ -20,9 +21,6 @@ def llm(query: str, chat_history: list[dict], context: str = "No Context Found D
     chat_history.append(querym)
     messages = chat_history
     generation = get_llm().invoke(messages)
-    # print("\n",generation,"\n")
     response = generation.content
-    # print(generation)
-    # tokens = generation.response_metadata["token_usage"]["total_tokens"]
     tokens=generation.usage_metadata["total_tokens"]
     return response,tokens

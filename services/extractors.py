@@ -27,8 +27,6 @@ def cleanup_order_text(text: str):
     metadatas = "\n".join(outcomes[:-1])
     pos=metadatas.find("undefined")
     metadatas= metadatas[pos +len("undefined")+1:]
-    # main_pos=main_content.rfind("*")
-    # main_content=main_content[:main_pos]
     response = "# SEPERATOR #".join([metadatas, main_content])
     return main_content
 
@@ -39,13 +37,8 @@ def order_extractor(file):
         for page in pdf.pages:
             text += page.extract_text() or ""
     cleaned_text = cleanup_order_text(text)
-    print(cleaned_text)
     max_chunk_size=2000
-    sentences = re.split(r'(?<=[.!?]) +', cleaned_text) 
-# [.!?] means it  check for sentence ending punctuation 
-# ?<=  ensure that split occur after punctuation
-# " +" ensure that if this punctuation inside a sentence it doesn't split there
-# it check that there is space after punctuation if there is a space it make split
+    sentences = re.split(r'(?<=[.!?]) +', cleaned_text)
     chunks = []
     temp_text = ""
 
@@ -118,10 +111,6 @@ def act_extractor(file):
     splitted_text = cleanup_act_text(text)
     max_chunk_size=2000
     sentences = re.split(r'(?<=[.!?]) +', splitted_text) 
-# [.!?] means it  check for sentence ending punctuation 
-# ?<=  ensure that split occur after punctuation
-# " +" ensure that if this punctuation inside a sentence it doesn't split there
-# it check that there is space after punctuation if there is a space it make split
     chunks = []
     temp_text = ""
 

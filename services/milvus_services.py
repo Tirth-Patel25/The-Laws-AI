@@ -45,13 +45,7 @@ def create_collection(collection: str) -> dict:
 
 def insert(collection: str, file_name: str,  file_type: str, file) -> dict | None:
     chunks = extractor(file=file, type=file_type, category=collection)
-    # chunks = chunker(file_content, category=collection)
-    print("length of chunks:", len(chunks))
-    current_time = time.time()
     embeddings = generate_embeddings(chunks)
-    embedding_time = time.time()
-    print("Time taken:", embedding_time - current_time)
-    print("length of embeddings:", len(embeddings))
 
     # Check if Collection Exist
     collection_exist = milvus_client.has_collection(collection_name=collection)
@@ -68,11 +62,8 @@ def insert(collection: str, file_name: str,  file_type: str, file) -> dict | Non
         collection_name=collection,
         data=data_to_insert,
     )
-    print("Inserted Data")
-    print("Response from Milvus:", response)
     return response if response else None
-    # return "Something"
-
+    
 def search(query: str,collection:str) -> str:
     search_query = search_embeddings(query=query)
 
@@ -119,7 +110,7 @@ def search(query: str,collection:str) -> str:
     if chunks:
         context = ""
         for chunk in chunks:
-            print("Context:\n", chunk['id'], chunk['distance'])
+            print("Distance:",chunk['distance'])
             context += f"{chunk['entity']['text']}\n"
         return context
     else:

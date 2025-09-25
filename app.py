@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Body, File, UploadFile
+from fastapi import FastAPI, HTTPException, Body, Form, File, UploadFile
 from fastapi.responses import JSONResponse
 from langchain_core.messages import HumanMessage
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,7 +31,7 @@ async def root():
 
 # <----- File Upload ----->
 @app.post("/upload")
-async def ask(category: str, file: UploadFile = File(...)):
+async def ask(category: str = Form(...), file: UploadFile = File(...)):
     file_name = file.filename
     allowed_extensions = ["pdf", "json"]
     file_extension = file_name.split(".")[-1]

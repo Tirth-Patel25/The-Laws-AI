@@ -38,10 +38,10 @@ async def ask(category: str = Form(...), file: UploadFile = File(...)):
     f_name = file_name.split(".")[0]
 
     if file_extension not in allowed_extensions:
-        raise HTTPException(detail="Unsupported file format!!!", status_code=400)
+        raise JSONResponse(content="Invalid file format!!\nOnly .json and .pdf files are allowed", status_code=400)
     
-    if not category:
-        return HTTPException(detail="Category Not mentioned!!!", status_code=400)
+    if not category or category not in ["judgement", "order", "act"]:
+        return JSONResponse(content="Invalid category\nCategory must be judgement, order or act", status_code=400)
     
     response = insert(collection=category, file_name=f_name, file_type=file_extension, file=file)
     if response:

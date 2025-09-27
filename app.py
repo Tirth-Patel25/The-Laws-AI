@@ -61,9 +61,8 @@ async def chat(request: dict =  Body(...)):
     3. order: Use this tool to fetch or explain Indian government or court orders.
 
     Instructions:
-    - When a user query matches the function of a tool, CALL the tool immediately
-    - Do NOT just suggest which tool could be called.
-    - Only if the query does NOT match any tool, respond normally.
+    - ALWAYS call exactly one tool for every query.
+    - NEVER answer in natural language directly.
 
     Query:
     {query}
@@ -81,4 +80,4 @@ async def chat(request: dict =  Body(...)):
         return JSONResponse(content=response, status_code=200)
     
     else:
-        return ["As a Legal Assistant, my role is to provide information and guidance on legal matters.\n\nTo answer your question, I would need to provide information outside of my designated scope. Instead, I would like to inform you to ask a question relevant to a legal context, such as contract law, intellectual property, or any other legal topic. I'll be happy to assist you with that. \n\nPlease ask a question related to law, and I'll do my best to provide a helpful response.",initial_tokens]
+        return ["I specialize in legal matters. Kindly ask a question related to Indian law—such as judgments, acts, or orders—and I will be able to assist you.",initial_tokens]

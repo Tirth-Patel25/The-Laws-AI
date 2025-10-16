@@ -1,18 +1,12 @@
-from fastapi import FastAPI, HTTPException, Body, Form, File, UploadFile
+from fastapi import FastAPI, HTTPException, Body, File, UploadFile,Form
 from fastapi.responses import JSONResponse
-from langchain_core.messages import HumanMessage
+from utils.llms import llm_with_tool
+from services.tools import judgement, act, order, list_response, followup_handler
 from fastapi.middleware.cors import CORSMiddleware
 
 # Custom Imports
-from utils.llms import llm_with_tool
-from services.tools import judgement, act, order
 from services.milvus_services import insert, search
 from services.llm_response import llm
-
-# Environment config imports
-from dotenv import load_dotenv
-import os
-load_dotenv()
 
 # <----- FastAPI ----->
 app = FastAPI()
@@ -38,10 +32,10 @@ async def ask(category: str = Form(...), file: UploadFile = File(...)):
     f_name = file_name.split(".")[0]
 
     if file_extension not in allowed_extensions:
-        return JSONResponse(content="Invalid file format!!\nOnly .json and .pdf files are allowed", status_code=400)
+        return JSONResponse(content="Unsupported file format!!!", status_code=400)
     
-    if not category or category not in ["judgement", "order", "act"]:
-        return JSONResponse(content="Invalid category\nCategory must be judgement, order or act", status_code=400)
+    if not category:
+        return JSONResponse(content="Category Invalid!!!", status_code=400)
     
     response = insert(collection=category, file_name=f_name, file_type=file_extension, file=file)
     if response:
@@ -55,29 +49,71 @@ async def chat(request: dict =  Body(...)):
     query = request.get("query")
     tool_llama = llm_with_tool(judgement, act, order)
     chat_history = request.get("chat_history", [])
+    current_intent = request.get("intent")
     prompt = f"""You are an Legal AI assistant with access to the following tools:
     1. judgement: Use this tool to retrieve or summarize Indian court judgments.
     2. act: Use this tool to provide details about Indian Acts and their sections.
     3. order: Use this tool to fetch or explain Indian government or court orders.
 
-    Instructions:
-    - ALWAYS call exactly one tool for every query.
-    - NEVER answer in natural language directly.
+    Rule:
+    - When a user query matches the function of a tool, Always CALL the tool 
+    - Do NOT just suggest which tool could be called
+    - Only if the query does NOT match any tool, respond normally.
 
+    
+    User's Most Recent Query is About  :{current_intent}
+    
     Query:
     {query}
     """
-    chat_history.append(HumanMessage(content=prompt))
-    res = tool_llama.invoke(chat_history)
-    initial_tokens = res.usage_metadata["total_tokens"]
-    
-    if res.tool_calls and res.tool_calls[0]:
-        tool_call = res.tool_calls[0]
-        context = search(query=query, collection=tool_call["name"])
-        response = llm(query=query, context=context, chat_history=chat_history)
-        response = list(response)
-        response[1] = response[1] + initial_tokens
-        return JSONResponse(content=response, status_code=200)
-    
-    else:
-        return ["I specialize in legal matters. Kindly ask a question related to Indian law—such as judgments, acts, or orders—and I will be able to assist you.",initial_tokens]
+    try:
+        intent_prompt = {"role" : "human" , "content" : prompt}
+        chat_history.insert(0,intent_prompt)
+        res=tool_llama.invoke(input=chat_history)
+        initial_token=res.usage_metadata["total_tokens"]
+        chat_history.pop(0)
+        
+        if(res.tool_calls):
+            listtool=llm_with_tool(list_response,followup_handler)
+            listprompt=f"""You are a Legal AI assistant        
+            You Have Access To Following Tool:
+            1. list_response: Use this tool To list Legal Related query
+            2. followup_handler: Use This Tool To Restructure Vague query of user in Follow up question
+
+            Rules:
+            - You can call more than one tool. 
+            - When a user query matches the function of a tool, Only then call the tool 
+            - Do NOT just suggest which tool could be called
+            - Only if the query does NOT match any tool, respond normally.
+            
+            Query:
+            {query}
+            """
+            toolprompt={"role":"human","content":listprompt}
+            chat_history.insert(0,toolprompt)
+            listres=listtool.invoke(input=chat_history)
+            chat_history.pop(0)
+            list_token=0
+            if(listres.tool_calls):
+                if(listres.tool_calls[0]['name']=="followup_handler"):
+                    query=listres.tool_calls[0]['args']['query']
+                list_token=listres.usage_metadata["total_tokens"]
+                if(listres.tool_calls[0]['name']=="list_response"):
+                        context = search(query=query,collection=res.tool_calls[0]['name'],list=True)
+                else:
+                        context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
+            else:
+                context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
+            response = llm(query=query,chat_history=chat_history, context=context)
+            response=list(response)
+            response[1] = response [1] + initial_token + list_token
+            response.append(res.tool_calls[0]['name'])
+            return JSONResponse(content=response, status_code=200)
+
+        else:
+            return ["As a Legal Assistant, my role is to provide information and guidance on legal matters.\n\nTo answer your question, I would need to provide information outside of my designated scope. Instead, I would like to inform you to ask a question relevant to a legal context, such as contract law, intellectual property, or any other legal topic. I'll be happy to assist you with that.\n\nPlease ask a question related to law, and I'll do my best to provide a helpful response.",initial_token,current_intent]
+    except Exception as e:
+            if "rate limit" in str(e).lower():
+                raise HTTPException(status_code=429, detail="Groq rate limit exceeded. Try Again After 24 Hours")
+            print(e)
+            raise  HTTPException(status_code=500, detail=str(e))

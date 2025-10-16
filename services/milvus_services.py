@@ -1,26 +1,24 @@
-from pymilvus import MilvusClient, CollectionSchema, FieldSchema, DataType, Collection
+from pymilvus import MilvusClient, CollectionSchema, FieldSchema, DataType
 from services.extractors import extractor
 from services.embedder import generate_embeddings, search_embeddings
-from utils.chunker import chunker, create_ids
+from utils.chunker import  create_ids
 
 import time
 import os
 from dotenv import load_dotenv
-from collections import defaultdict
 
 load_dotenv()
 
 schema = CollectionSchema(
     fields=[
-        FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, auto_id=False, max_length=20),
+        FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, auto_id=False, max_length=50),
         FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=768, metric_type="COSINE"),
         FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535),
     ],
     description="Collection for storing text embeddings",
 )
 
-# milvus_client = MilvusClient(uri=os.getenv("MILVUS_URI"), db_name=os.getenv("MILVUS_DB_NAME"))
-milvus_client = MilvusClient(uri=os.getenv("ZILLIS_URI_ENDPOINT"), token=os.getenv("ZILLIS_TOKEN"), password=os.getenv("ZILLIS_PASSWORD"), db_name=os.getenv("ZILLIS_DB_NAME"))
+milvus_client = MilvusClient(uri=os.getenv("MILVUS_URI"), db_name=os.getenv("MILVUS_DB_NAME"))
 
 def create_collection(collection: str) -> dict:
     index_params = milvus_client.prepare_index_params()
@@ -45,7 +43,12 @@ def create_collection(collection: str) -> dict:
 
 def insert(collection: str, file_name: str,  file_type: str, file) -> dict | None:
     chunks = extractor(file=file, type=file_type, category=collection)
+    print("length of chunks:", len(chunks))
+    current_time = time.time()
     embeddings = generate_embeddings(chunks)
+    embedding_time = time.time()
+    print("Time taken:", embedding_time - current_time)
+    print("length of embeddings:", len(embeddings))
 
     # Check if Collection Exist
     collection_exist = milvus_client.has_collection(collection_name=collection)
@@ -62,9 +65,11 @@ def insert(collection: str, file_name: str,  file_type: str, file) -> dict | Non
         collection_name=collection,
         data=data_to_insert,
     )
+    print("Inserted Data")
+    print("Response from Milvus:", response)
     return response if response else None
-    
-def search(query: str,collection:str) -> str:
+
+def search(query: str,collection:str,list:bool) -> str:
     search_query = search_embeddings(query=query)
 
     search_params = {
@@ -75,43 +80,46 @@ def search(query: str,collection:str) -> str:
         "M":64,
         "radius": 0.6
     }
-    
-    # # Get Documents
-    # documents = milvus_client.search(
-    #     collection_name=collection, 
-    #     data=[search_query], 
-    #     search_params=search_params,
-    #     filter="not id like '%_@_1'",
-    #     limit=5, 
-    #     output_fields=["text", "id"]
-    # )[0]
+    context=""
+    if(list):
+        main_documents = milvus_client.search(
+            collection_name=collection, 
+            data=[search_query], 
+            search_params=search_params,
+            filter="id like '%_@_1'",
+            limit=5, 
+            output_fields=["text","id"]
+        )[0]
+        ids=[doc["id"] for doc in main_documents]
+        ids=[idst.replace("_@_1","_@_0") for idst in ids]
+        if(len(ids)>0):
+            documents=milvus_client.query(
+            collection_name=collection,
+            filter=f"id in {ids}",
+            output_fields=["text","id"],
+            limit=5
+        ) 
+            if  documents:
+             for metadoc,doc in zip(documents,main_documents):
+                 data=metadoc.get("entity",metadoc)
+                 context+= f"{data.get('text')}\n Description:{doc.get('entity').get('text')}\n"
 
-    # # Get header chunks
-    # header_chunks = milvus_client.search(
-    #     collection_name=collection, 
-    #     data=[search_query], 
-    #     search_params=search_params,
-    #     filter="id LIKE '%_@_1'",
-    #     limit=5, 
-    #     output_fields=["text", "id"]
-    # )[0]
-
-    # Actual search
-    chunks = milvus_client.search(
-        collection_name=collection, 
-        data=[search_query], 
-        search_params=search_params,
-        limit=5, 
-        output_fields=["text", "id"]
-    )[0]
-
-    # print("Docs: ", documents)
-    # if documents and header_chunks:
-    if chunks:
-        context = ""
-        for chunk in chunks:
-            print("Distance:",chunk['distance'])
-            context += f"{chunk['entity']['text']}\n"
-        return context
     else:
-        return "No Context Found Do not response"
+            documents = milvus_client.search(
+            collection_name=collection, 
+            data=[search_query], 
+            search_params=search_params,
+            filter="not id like '%_@_0'",
+            limit=5, 
+            output_fields=["text", "id"]
+        )[0]
+    
+            if  documents:
+                for doc in documents:
+                     data=doc.get("entity",doc)
+                     context+= f"Content: {data.get('text')}\n"
+
+    if context:
+       return context 
+    else:
+        return "No Context Do Not Respond"

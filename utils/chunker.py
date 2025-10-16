@@ -1,7 +1,3 @@
-# from langchain_experimental.text_splitter import SemanticChunker
-from services.embedder import embedder
-
-# semanticChunker = SemanticChunker(embeddings=embedder, breakpoint_threshold_amount=0.75, min_chunk_size=2000)
 
 # <----- Type wise Chunks ----->
 def get_judgement_chunks(text: str) -> list[str]:
@@ -33,4 +29,4 @@ def chunker(text: str, category: str) -> list[str]:
 
 # <----- File IDs ----->
 def create_ids(name: str, length: int) -> list[str]:
-    return [f"{name}_@_{i}" for i in range(1, length+1)]
+    return [f"{name}_@_{i}" for i in range(0, length+1)]

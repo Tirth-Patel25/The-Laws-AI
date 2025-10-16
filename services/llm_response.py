@@ -1,19 +1,8 @@
-# from langchain_ollama import ChatOllama
-# from langchain_groq import ChatGroq
-
 from services.prompts import Prompt
-from typing import Tuple
 from utils.llms import get_llm
 
-# import os
-# from dotenv import load_dotenv
-# load_dotenv()
-
-# Production Local LLM use
-# ollama_llm = ChatOllama(model=os.getenv("OLLAMA_MODEL", "llama3.1:8b"))
-
 # Local
-def llm(query: str, chat_history: list[dict], context: str = "No Context Found Do not response") -> Tuple[str, str]:
+def llm(query: str, chat_history: list[dict], context: str = "No Context Found Do not response") -> tuple[str, str]:
     prompt = Prompt.response_prompt(context=context)
     promptm={"role":"human","content":prompt}
     chat_history.insert(0,promptm)

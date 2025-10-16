@@ -27,8 +27,7 @@ def cleanup_order_text(text: str):
     metadatas = "\n".join(outcomes[:-1])
     pos=metadatas.find("undefined")
     metadatas= metadatas[pos +len("undefined")+1:]
-    response = "# SEPERATOR #".join([metadatas, main_content])
-    return main_content
+    return metadatas,main_content
 
 def order_extractor(file):
     file_bytes = file.file.read()
@@ -38,9 +37,10 @@ def order_extractor(file):
             text += page.extract_text() or ""
     cleaned_text = cleanup_order_text(text)
     max_chunk_size=2000
-    sentences = re.split(r'(?<=[.!?]) +', cleaned_text)
+    sentences = re.split(r'(?<=[.!?]) +', cleaned_text[1]) 
     chunks = []
     temp_text = ""
+    chunks.append(cleaned_text[0])
 
     for sentence in sentences:
         if len(temp_text) + len(sentence) > max_chunk_size:
@@ -56,15 +56,52 @@ def order_extractor(file):
     return chunks
 
 # <----- JUDGEMENT EXTRACTOR ----->
+def get_judgement_metadata(content:dict):
+     Title=content.get("Title")
+     Country=content.get("Country",{}).get("Name")
+     Court_Name=content.get("Court",{}).get("Name")
+     Court_Type=content.get("Court",{}).get("Type")
+     Date=content.get("JudgmentDate")
+     if(content.get("Appellants",[])):
+        Appellants=content.get("Appellants",[])[0]
+     else:
+         Appellants=""
+     if(content.get("Respondants",[])):
+        Respondants=content.get("Respondants",[])[0]
+     else:
+         Respondants=""
+     if(content.get("Advocates",[])):
+        Advocates=content.get("Advocates",[])[0]
+     else:
+         Advocates=""
+     if(content.get("Judges",[])):
+        Judges=content.get("Judges",[])[0]
+     else:
+         Judges=""
+     AppealType=content.get("AppealType")
+     FinalVerdict=content.get("FinalVerdict")
+
+     return f"""Title: {Title},
+     Country: {Country},
+     Court Name: {Court_Name},
+     Court Type: {Court_Type},
+     Judgement Date: {Date},
+     Appellants: {Appellants},
+     Respondants: {Respondants},
+     Advocates: {Advocates},
+     Judges: {Judges},
+     AppealType: {AppealType},
+     Final Verdict: {FinalVerdict}"""
+
 def judgement_extractor(file):
     file_bytes = file.file.read()
     content = json.loads(file_bytes)
 
     max_chunk_size = 2000
     output = []
-
     temp_text = ""
-
+    metadata=get_judgement_metadata(content)
+    output.append(metadata)
     data = content.get("JudgementText", {}).get("Paragraphs", [])
 
     for para in data:
@@ -87,6 +124,7 @@ def judgement_extractor(file):
         output.append(temp_text.strip())
 
     return output
+
 
 # <----- ACT EXTRACTOR ----->
 def cleanup_act_text(text: str):

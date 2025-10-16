@@ -7,7 +7,7 @@ load_dotenv()
 
 def get_llm():
     # Local Testing
-    return ChatGroq(api_key=os.getenv("GROQ_API_KEY"), model="llama-3.3-70b-versatile", temperature=0, max_tokens=None)
+    return ChatGroq(api_key=os.getenv("GROQ_API_KEY"), model=os.getenv("GROQ_MODEL_NAME"), temperature=0, max_tokens=None)
 
     # Production
     # return ChatOllama(model="llama3.1:8b", base_url="http://192.168.29.156:11434")

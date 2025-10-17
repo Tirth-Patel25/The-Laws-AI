@@ -15,4 +15,4 @@ def get_llm():
 def llm_with_tool(*args):
     llm=get_llm()
     tools=list(args)
-    return llm.bind_tools(tools, tool_choice="any")
+    return llm.bind_tools(tools, tool_choice="auto")

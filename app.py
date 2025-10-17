@@ -123,8 +123,3 @@ Query:
                 raise HTTPException(status_code=429, detail="Groq rate limit exceeded. Try Again After 24 Hours")
             print(e)
             raise  HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    import os
-    uvicorn.run("app:app", host=os.getenv("API_HOST"), port=int(os.getenv("API_PORT")), reload=True)

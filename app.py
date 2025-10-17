@@ -96,15 +96,18 @@ async def chat(request: dict =  Body(...)):
             chat_history.pop(0)
             list_token=0
             if(listres.tool_calls):
-                print("List / Followup Tool Called")
                 if(listres.tool_calls[0]['name']=="followup_handler"):
                     query=listres.tool_calls[0]['args']['query']
+                    print("Followup Tool Called")
+                    print(f"Restructured Query: {query}")
                 list_token=listres.usage_metadata["total_tokens"]
                 if(listres.tool_calls[0]['name']=="list_response"):
-                        context = search(query=query,collection=res.tool_calls[0]['name'],list=True)
+                    print("List Tool Called")
+                    context = search(query=query,collection=res.tool_calls[0]['name'],list=True)
                 else:
-                        context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
+                    context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
             else:
+                print("No Sub Tools Called")
                 context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
             response = llm(query=query,chat_history=chat_history, context=context)
             response=list(response)

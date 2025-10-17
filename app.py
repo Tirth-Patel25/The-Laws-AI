@@ -74,6 +74,7 @@ async def chat(request: dict =  Body(...)):
         chat_history.pop(0)
         
         if(res.tool_calls):
+            print("Intent Tool Called")
             listtool=llm_with_tool(list_response,followup_handler)
             listprompt=f"""You are a Legal AI assistant        
             You Have Access To Following Tool:
@@ -95,6 +96,7 @@ async def chat(request: dict =  Body(...)):
             chat_history.pop(0)
             list_token=0
             if(listres.tool_calls):
+                print("List / Followup Tool Called")
                 if(listres.tool_calls[0]['name']=="followup_handler"):
                     query=listres.tool_calls[0]['args']['query']
                 list_token=listres.usage_metadata["total_tokens"]

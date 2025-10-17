@@ -100,9 +100,9 @@ def search(query: str,collection:str,list:bool) -> str:
             limit=5
         ) 
             if  documents:
-             for metadoc,doc in zip(documents,main_documents):
-                 data=metadoc.get("entity",metadoc)
-                 context+= f"{data.get('text')}\n Description:{doc.get('entity').get('text')}\n"
+                for metadoc,doc in zip(documents,main_documents):
+                    data=metadoc.get("entity",metadoc)
+                    context+= f"{data.get('text')}\n Description:{doc.get('entity').get('text')}\n"
 
     else:
             documents = milvus_client.search(
@@ -116,10 +116,12 @@ def search(query: str,collection:str,list:bool) -> str:
     
             if  documents:
                 for doc in documents:
-                     data=doc.get("entity",doc)
-                     context+= f"Content: {data.get('text')}\n"
+                    data=doc.get("entity",doc)
+                    context+= f"Content: {data.get('text')}\n"
 
     if context:
-       return context 
+        print(f"Context Passed:\n{context}")
+        return context 
     else:
+        print("No Context Passed")
         return "No Context Do Not Respond"

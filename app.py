@@ -75,20 +75,25 @@ async def chat(request: dict =  Body(...)):
         
         if(res.tool_calls):
             print("Intent Tool Called")
-            listtool=llm_with_tool(list_response,followup_handler)
-            listprompt=f"""You are a Legal AI assistant        
-            You Have Access To Following Tool:
-            1. list_response: Use this tool To list Legal Related query
-            2. followup_handler: Use This Tool To Restructure Vague query of user in Follow up question
+            listtool=llm_with_tool(followup_handler)
+            listprompt=f"""You are a Legal AI assistant.  
+You have access to 1 tool: `followup_handler`.  
 
-            Rules:
-            - You can call more than one tool. 
-            - When a user query matches the function of a tool, Only then call the tool 
-            - Do NOT just suggest which tool could be called
-            - Only if the query does NOT match any tool, respond normally.
-            
-            Query:
-            {query}
+You MUST CALL `followup_handler` if:  
+1. The user's message is a follow-up to a previous conversation.  
+2. The user's message is unclear, ambiguous, or lacks sufficient context to provide a confident answer.  
+
+Examples:  
+- User: "What does the Indian Contract Act, 1872 say about minors entering contracts?"  
+  Assistant: "It states that contracts with minors are void from the beginning."  
+  User: "What about exceptions?"  
+  Tool: `followup_handler`  
+
+- User: "Explain the legal implications here." (without context)  
+  Tool: `followup_handler`  
+
+Query:  
+{query}
             """
             toolprompt={"role":"human","content":listprompt}
             chat_history.insert(0,toolprompt)
@@ -96,16 +101,12 @@ async def chat(request: dict =  Body(...)):
             chat_history.pop(0)
             list_token=0
             if(listres.tool_calls):
+                list_token=listres.usage_metadata["total_tokens"]
                 if(listres.tool_calls[0]['name']=="followup_handler"):
                     query=listres.tool_calls[0]['args']['query']
                     print("Followup Tool Called")
                     print(f"Restructured Query: {query}")
-                list_token=listres.usage_metadata["total_tokens"]
-                if(listres.tool_calls[0]['name']=="list_response"):
-                    print("List Tool Called")
-                    context = search(query=query,collection=res.tool_calls[0]['name'],list=True)
-                else:
-                    context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
+                context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
             else:
                 print("No Sub Tools Called")
                 context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
@@ -122,3 +123,8 @@ async def chat(request: dict =  Body(...)):
                 raise HTTPException(status_code=429, detail="Groq rate limit exceeded. Try Again After 24 Hours")
             print(e)
             raise  HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    uvicorn.run("app:app", host=os.getenv("API_HOST"), port=int(os.getenv("API_PORT")), reload=True)

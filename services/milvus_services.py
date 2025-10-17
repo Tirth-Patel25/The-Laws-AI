@@ -81,46 +81,23 @@ def search(query: str,collection:str,list:bool) -> str:
         "radius": 0.6
     }
     context=""
-    if(list):
-        main_documents = milvus_client.search(
-            collection_name=collection, 
-            data=[search_query], 
-            search_params=search_params,
-            filter="id like '%_@_1'",
-            limit=5, 
-            output_fields=["text","id"]
-        )[0]
-        ids=[doc["id"] for doc in main_documents]
-        ids=[idst.replace("_@_1","_@_0") for idst in ids]
-        if(len(ids)>0):
-            documents=milvus_client.query(
-            collection_name=collection,
-            filter=f"id in {ids}",
-            output_fields=["text","id"],
-            limit=5
-        ) 
-            if  documents:
-                for metadoc,doc in zip(documents,main_documents):
-                    data=metadoc.get("entity",metadoc)
-                    context+= f"{data.get('text')}\n Description:{doc.get('entity').get('text')}\n"
-
-    else:
-            documents = milvus_client.search(
-            collection_name=collection, 
-            data=[search_query], 
-            search_params=search_params,
-            filter="not id like '%_@_0'",
-            limit=5, 
-            output_fields=["text", "id"]
-        )[0]
     
-            if  documents:
-                for doc in documents:
-                    data=doc.get("entity",doc)
-                    context+= f"Content: {data.get('text')}\n"
+    documents = milvus_client.search(
+        collection_name=collection, 
+        data=[search_query], 
+        search_params=search_params,
+        filter="not id like '%_@_0'",
+        limit=5, 
+        output_fields=["text", "id"]
+    )[0]
+
+    if documents:
+        for doc in documents:
+            data=doc.get("entity",doc)
+            print(f"Id: {data.get('id')}\nDistance: {doc.get('distance')}\nContent: {data.get('text')}\n")
+            context+= f"Content: {data.get('text')}\n"
 
     if context:
-        print(f"Context Passed:\n{context}")
         return context 
     else:
         print("No Context Passed")

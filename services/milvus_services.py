@@ -101,4 +101,4 @@ def search(query: str,collection:str,list:bool) -> str:
         return context 
     else:
         print("No Context Passed")
-        return "No Context Do Not Respond"
+        return None

@@ -74,7 +74,7 @@ async def chat(request: dict =  Body(...)):
         chat_history.pop(0)
         
         if(res.tool_calls):
-            print("Intent Tool Called")
+            print(f"Intent Tool Called:{res.tool_calls[0]['name']}")
             listtool=llm_with_tool(followup_handler)
             listprompt=f"""You are a Legal AI assistant.  
 You have access to 1 tool: `followup_handler`.  
@@ -104,17 +104,18 @@ Query:
                 list_token=listres.usage_metadata["total_tokens"]
                 if(listres.tool_calls[0]['name']=="followup_handler"):
                     query=listres.tool_calls[0]['args']['query']
-                    print("Followup Tool Called")
                     print(f"Restructured Query: {query}")
                 context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
             else:
-                print("No Sub Tools Called")
                 context = search(query=query,collection=res.tool_calls[0]['name'],list=False)
-            response = llm(query=query,chat_history=chat_history, context=context)
-            response=list(response)
-            response[1] = response [1] + initial_token + list_token
-            response.append(res.tool_calls[0]['name'])
-            return JSONResponse(content=response, status_code=200)
+            if context:
+                response = llm(query=query,chat_history=chat_history, context=context)
+                response=list(response)
+                response[1] = response [1] + initial_token + list_token
+                response.append(res.tool_calls[0]['name'])
+                return JSONResponse(content=response, status_code=200)
+            else:
+                ["Sorry, but I couldn't find any relevant information related to your query. Kindly provide additional details or clarify your request so I may assist you accurately.",0]
 
         else:
             return ["As a Legal Assistant, my role is to provide information and guidance on legal matters.\n\nTo answer your question, I would need to provide information outside of my designated scope. Instead, I would like to inform you to ask a question relevant to a legal context, such as contract law, intellectual property, or any other legal topic. I'll be happy to assist you with that.\n\nPlease ask a question related to law, and I'll do my best to provide a helpful response.",initial_token,current_intent]

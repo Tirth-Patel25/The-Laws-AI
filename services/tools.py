@@ -45,43 +45,46 @@ def judgement(query:str):
 @tool
 def act(query:str):
     '''
-    Use this tool to provide details about Indian Acts and their sections.
+    Use this tool to fetch, interpret, and explain provisions from Central or State Acts.
 
-    Includes:
-    - Central Acts (e.g., IPC, Companies Act, IT Act, GST Act)
-    - State-specific Acts
-    - Explanations of legal sections
+    Purpose:
+    - To assist in interpreting statutory provisions, their applicability, scope, and meaning.
+    - To provide plain-language summaries or explanations of sections, clauses, and subsections from Acts.
+    - To clarify cross-references within Acts or between related laws.
 
-    Trigger this tool whenever the user asks about:
-    - Explanation or meaning of an Act
-    - Specific sections of Indian law
-    - Compliance or requirements under an Act
+    Trigger Conditions:
+    - Call this tool whenever the user asks about:
+        * Any provision, section, clause, or subsection of a Central or State Act.
+        * Legal interpretation or effect of a statutory provision.
+        * Applicability, exceptions, or amendments under an Act.
+        * References such as “Section 7 of CPC”, “as per the Companies Act”, etc.
 
     Non-Trigger Conditions: Queries About Following:
-    - Court orders
-    - Procedural rules governing civil litigation
-    - Legal effects, conditions, or procedural steps under CPC Orders
+    - Court Orders (interim or final)
+    - Procedural steps under CPC Orders and Rules
+    - judgments, or tribunal decisions
+    - Notifications, circulars, or government orders
+    - State amendments to procedural rules (unless part of the Act text)
     - Supreme Court judgments
     - High Court judgments
     - Any Court Judgements
 
     Example Queries:
-    - "Suit can withdraw at any time as per the order 23 rule 1"
-    - "when the prima facie the provisions of sc/st (poa) not applicable, the petition for anticipatory bail maintainable"
-    - "What are the primary elements that need to be established to prove action under act of defense?"
-    - "What is the recent amendment in section 11 arbitration?"
-    - "What are the legal remedies available to an individual for violation of Right to Privacy?"
-    - "The suit is file for adverse possession.Limitation for the  filing of the suit  If any case law please send it"
-    - "When there is no doctor certificate attached to the WILL, the said WILL is not legal and valid."
-    - "Before the completion of the loan bank without recall the loan can not demand the outstanding amount. The bank only demand the overdue amount"
-
+    -     "Suit can withdraw at any time as per the order 23 rule 1"
+    -     "when the prima facie the provisions of sc/st (poa) not applicable, the petition for anticipatory bail maintainable"
+    -     "What are the primary elements that need to be established to prove action under act of defense?"
+    -     "What is the recent amendment in section 11 arbitration?"
+    -     "What are the legal remedies available to an individual for violation of Right to Privacy?"
+    -     "The suit is file for adverse possession.Limitation for the  filing of the suit  If any case law please send it"
+    -     "When there is no doctor certificate attached to the WILL, the said WILL is not legal and valid."
+    -     "Before the completion of the loan bank without recall the loan can not demand the outstanding amount. The bank only demand the overdue amount"
     '''
     pass
 
 @tool
 def order(query: str):
     """
-    Use this tool to fetch, explain, or clarify Indian government or court orders,
+    Use this tool to fetch, explain court orders,
 
     Purpose:
     - To assist in interpreting provisions, procedural requirements, and legal effects of interim or final court orders.
@@ -94,32 +97,28 @@ def order(query: str):
         * Legal effects, conditions, or procedural steps under CPC Orders
     
     Non-Trigger Condition: Queries About Following
-    - Court Judgement
-    - Central Acts (e.g., IPC, Companies Act, IT Act, GST Act)
-    - State-specific Acts
-    - Explanations of legal sections
-    - Supreme Court judgments
-    - High Court judgments
-    - Tribunal decisions (if applicable)
-    - Any Court Judgements
+    - Court Judgement (Supreme Court, High Court, or Tribunal decisions)
+    - Central or State Acts (e.g., IPC, Evidence Act, GST Act)
+    - Explanations of statutory sections
+    - Case law summaries or precedent-based analysis
 
 
     Example Queries:
-    - "Under what circumstances can a party be added to a suit under Order 1 Rule 10 CPC?"
-    - "What is the effect of non-joinder of claims under Order 2 Rule 2 CPC?"
-    - "What are the modes of service of summons under Order 5 CPC?"
-    - "What is the difference between material facts and evidence as per Order 6 Rule 2 CPC?"
-    - "When can a plaint be rejected under Order 7 Rule 11 CPC?"
-    - "What is the time limit for filing a written statement under Order 8 Rule 1 CPC?"
-    - "What remedies are available when the defendant does not appear under Order 9 CPC?"
-    - "What is the evidentiary value of admissions under Order 12 Rule 6 CPC?"
-    - "Differentiate between issues of law and issues of fact under Order 14 CPC."
-    - "Under what circumstances can adjournments be granted under Order 17 CPC?"
-    - "What are the modes of execution of decrees under Order 21 CPC?"
-    - "What is the effect of the death of a party during a suit under Order 22 CPC?"
-    - "What is the difference between withdrawal of suit with and without permission under Order 23 CPC?"
-    - "What are the grounds for granting a temporary injunction under Order 39 CPC?"
-    - "What powers does an appellate court have under Order 41 Rule 33 CPC?"
+    -      "Under what circumstances can a party be added to a suit under Order 1 Rule 10 CPC?"
+    -      "What is the effect of non-joinder of claims under Order 2 Rule 2 CPC?"
+    -      "What are the modes of service of summons under Order 5 CPC?"
+    -      "What is the difference between material facts and evidence as per Order 6 Rule 2 CPC?"
+    -      "When can a plaint be rejected under Order 7 Rule 11 CPC?"
+    -      "What is the time limit for filing a written statement under Order 8 Rule 1 CPC?"
+    -      "What remedies are available when the defendant does not appear under Order 9 CPC?"
+    -      "What is the evidentiary value of admissions under Order 12 Rule 6 CPC?"
+    -      "Differentiate between issues of law and issues of fact under Order 14 CPC."
+    -      "Under what circumstances can adjournments be granted under Order 17 CPC?"
+    -      "What are the modes of execution of decrees under Order 21 CPC?"
+    -      "What is the effect of the death of a party during a suit under Order 22 CPC?"
+    -      "What is the difference between withdrawal of suit with and without permission under Order 23 CPC?"
+    -      "What are the grounds for granting a temporary injunction under Order 39 CPC?"
+    -      "What powers does an appellate court have under Order 41 Rule 33 CPC?"
 
     """
     pass

@@ -115,7 +115,7 @@ Query:
                 response.append(res.tool_calls[0]['name'])
                 return JSONResponse(content=response, status_code=200)
             else:
-                response = ["Sorry, but I couldn't find any relevant information related to your query. Kindly provide additional details or clarify your request so I may assist you accurately.", initial_token + list_token]
+                response = ["Sorry, but I couldn't find any relevant information related to your query. Kindly provide additional details or clarify your request so I may assist you accurately.", initial_token + list_token, current_intent]
                 return JSONResponse(content=response, status_code=200)
 
         else:
